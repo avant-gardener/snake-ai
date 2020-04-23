@@ -45,6 +45,7 @@ class Network(object):
         return a
 
     def sgd(self, training_data, epochs, mini_batch_size, learning_rate, testing_data=None):
+        n_test = 0
         if testing_data:
             n_test = len(testing_data)
         data_length = len(training_data)
@@ -132,36 +133,3 @@ class Network(object):
             if y[x] == 1.0:
                 total += 1
         return total
-
-
-if __name__ == "__main__":
-    # Load the data
-    """
-    (x_train, y_train), (x_test, y_test) = mnist.load_data()
-    (x_train_2, y_train_2), (x_test_2, y_test_2) = cifar10.load_data()
-    train_data = []
-    test_data = []
-    data_name = input("Enter the name of the data set you want to train: ")
-    if data_name == "MNIST":
-        for j in range(len(x_train)):
-            train_data.append((np.reshape(x_train[j], (784, 1)).astype("float32") / 255, vectorized_result(y_train[j])))
-        for j in range(len(x_test)):
-            test_data.append((np.reshape(x_test[j], (784, 1)).astype("float32") / 255, vectorized_result(y_test[j])))
-    elif data_name == "CIFAR10":
-        for j in range(len(x_train_2)):
-            train_data.append((np.reshape(x_train_2[j], (3072, 1)).astype("float32") / 255, vectorized_result(y_train_2[j])))
-        for j in range(len(x_test_2)):
-            test_data.append((np.reshape(x_test_2[j], (3072, 1)).astype("float32") / 255, vectorized_result(y_test_2[j])))
-    print("Data loaded")
-
-    if data_name == "MNIST":
-        neural_network = Network([784, 30, 30, 10])
-        print("Network initialized")
-        print("Starting SGD")
-        neural_network.sgd(train_data, 30, 10, 2, test_data)
-    elif data_name == "CIFAR10":
-        neural_network = Network([3072, 40, 40, 10])
-        print("Network initialized")
-        print("Starting SGD")
-        neural_network.sgd(train_data, 30, 10, 2, test_data)
-    """
