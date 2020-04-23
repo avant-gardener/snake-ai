@@ -130,10 +130,11 @@ def play_game(snake_position, snake_head, apple_position, neural_n, network):
     direction_stack = []
     train_data = []
     move = 1
-    neural_network_input = np.zeros((11, 1))
+    neural_network_input = np.zeros((6, 1))
     moves = [pygame.K_LEFT, pygame.K_UP, pygame.K_RIGHT, pygame.K_DOWN]
     moves_left = 200
     moves_made = 0
+    fitness = 0
 
     while crashed_counter > 0:
         if neural_n:
@@ -200,6 +201,7 @@ def play_game(snake_position, snake_head, apple_position, neural_n, network):
         if snake_head == apple_position:
             apple_position, score = collision_with_apple(score, snake_position)
             moves_left += 100 * score
+            fitness += 10
             add_counter = 8
         if add_counter > 0:
             snake_position.insert(0, list(snake_head))
@@ -227,26 +229,35 @@ def play_game(snake_position, snake_head, apple_position, neural_n, network):
             left_clear = SnakeTrainer.is_left_clear(snake_position, current_direction)
             back_clear = SnakeTrainer.is_back_clear(snake_position, current_direction)
             straight_clear = SnakeTrainer.is_straight_clear(snake_position, current_direction)
+            food_right = SnakeTrainer.is_food_to_the_right(snake_head, apple_position)
+            food_left = SnakeTrainer.is_food_to_the_left(snake_head, apple_position)
+            food_ahead = SnakeTrainer.is_food_straight_ahead(snake_head, apple_position)
+            neural_network_input = [left_clear, straight_clear, right_clear, food_right, food_left, food_ahead]
+            """
             apple_distances = SnakeTrainer.calculate_distance_to_apple(snake_head, apple_position)
-            neural_network_input = [left_clear, straight_clear, right_clear]
             for i in apple_distances:
                 neural_network_input.append(i)
+            """
             neural_network_input = np.array([neural_network_input])
-            neural_network_input = neural_network_input[0].reshape((11, 1))
+            neural_network_input = neural_network_input[0].reshape((6, 1))
             if not neural_n:
                 train_data.append((neural_network_input, neural_network_output))
 
+        distance_to_apple = SnakeTrainer.calculate_real_distance_to_apple(snake_head, apple_position)
         snake_position, apple_position, current_direction = update_snake(snake_head, snake_position, apple_position,
                                                                          button_direction, current_direction)
-
+        new_distance_to_apple = SnakeTrainer.calculate_real_distance_to_apple(snake_head, apple_position)
+        if new_distance_to_apple < distance_to_apple:
+            fitness += 1
+        elif new_distance_to_apple > distance_to_apple:
+            fitness -= 1.5
         display_snake(snake_position)
         pygame.display.set_caption("Snake  Skor: " + str(score))
         pygame.display.update()
         if not neural_n:
             clock.tick(60)
         else:
-            clock.tick(240)
-
+            clock.tick(180)
         if counter < 60:
             counter += 1
         else:
@@ -259,9 +270,9 @@ def play_game(snake_position, snake_head, apple_position, neural_n, network):
         moves_left -= 1
         moves_made += 1
 
-    time.sleep(0.5)
+    # time.sleep(0.5)
 
-    return moves_made, train_data, score
+    return fitness, train_data, score
 
 
 def game(neural, network):
@@ -274,12 +285,12 @@ def game(neural, network):
     pygame.display.update()
 
     if neural:
-        total_moves, training_data, final_score = play_game(snake_position_start, snake_head_start, apple_position_start
-                                                            , neural, network)
-        return total_moves
+        fitness, training_data, final_score = play_game(snake_position_start, snake_head_start, apple_position_start
+                                                        , neural, network)
+        return fitness
     else:
-        total_moves, training_data, final_score = play_game(snake_position_start, snake_head_start, apple_position_start
-                                                            , neural, network)
+        fitness, training_data, final_score = play_game(snake_position_start, snake_head_start, apple_position_start
+                                                        , neural, network)
         snake_network.sgd(training_data, 10, 10, 1, training_data)
         final_text = "Skorunuz: " + str(final_score)
         final_text_2 = "Tekrar Denemek İçin R'ye Basın"

@@ -260,3 +260,30 @@ def collision_with_boundaries(snake_h):
         return 1
     else:
         return 0
+
+
+def calculate_real_distance_to_apple(snake_head, apple_position):
+    x = abs(snake_head[0] - apple_position[0])
+    y = abs(snake_head[1] - apple_position[1])
+    return math.sqrt(x**2 + y**2)
+
+
+def is_food_to_the_right(snake_head, apple_position):
+    if snake_head[0] < apple_position[0]:
+        return 1
+    else:
+        return 0
+
+
+def is_food_to_the_left(snake_head, apple_position):
+    if snake_head[0] > apple_position[0]:
+        return 1
+    else:
+        return 0
+
+
+def is_food_straight_ahead(snake_head, apple_position):
+    if snake_head[1] > apple_position[1]:
+        return 1
+    else:
+        return 0
