@@ -27,6 +27,7 @@ elif mode == "2":
     for p in range(generation_count):
         w_data = np.load("Values/Weights/weight_output{0}.npy".format(p), allow_pickle=True)
         b_data = np.load("Values/Biases/bias_output{0}.npy".format(p), allow_pickle=True)
+        print("Generation {0}".format(p))
         Population.load_snakes(w_data, b_data)
 elif mode == "3":
     while 1:

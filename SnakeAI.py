@@ -12,9 +12,11 @@ red = (200, 30, 30)
 black = (0, 0, 0)
 gray = (70, 70, 70)
 window_color = (200, 200, 200)
+snake_speed = Settings.snake_speed
 display_width = Settings.display_width
 display_height = Settings.display_height
 block_size = Settings.block_size
+block_count = Settings.block_count
 display = pygame.display.set_mode((display_width, display_height))
 clock = pygame.time.Clock()
 
@@ -32,27 +34,27 @@ def display_snake(snake_pos):
     snake_size_y = block_size - 4
     for position in snake_pos:
         if position == snake_pos[0]:
-            pygame.draw.rect(display, color, pygame.Rect(position[0], position[1], snake_size_x + 4, snake_size_y + 4))
+            pygame.draw.rect(display, color, pygame.Rect(position[0], position[1], block_size, block_size))
         else:
             pygame.draw.rect(display, color, pygame.Rect(position[0] + 2, position[1] + 2, snake_size_x, snake_size_y))
 
 
 def display_apple(apple_pos):
-    pygame.draw.rect(display, red, pygame.Rect(apple_pos[0] + 2, apple_pos[1] + 2, 28, 28))
+    pygame.draw.rect(display, red, pygame.Rect(apple_pos[0] + 2, apple_pos[1] + 2, block_size - 4, block_size - 4))
 
 
 def update_snake(snake_head_pos, snake_pos, apple_pos, direction, cur_direction):
     if cur_direction != direction:
-        if snake_head_pos[0] % block_size == 0 and snake_head_pos[1] % block_size == 0:
+        if is_on_grid(snake_head_pos):
             cur_direction = direction
     if cur_direction == "right":
-        snake_head_pos[0] += 4
+        snake_head_pos[0] += snake_speed
     elif cur_direction == "left":
-        snake_head_pos[0] -= 4
+        snake_head_pos[0] -= snake_speed
     elif cur_direction == "up":
-        snake_head_pos[1] -= 4
+        snake_head_pos[1] -= snake_speed
     elif cur_direction == "down":
-        snake_head_pos[1] += 4
+        snake_head_pos[1] += snake_speed
     snake_pos.insert(0, list(snake_head_pos))
     snake_pos.pop()
 
@@ -81,9 +83,9 @@ def collision_with_self(snake_pos):
 
 
 def collision_with_apple(t_score, snake_pos):
-    apple_pos = [random.randrange(1, 16) * block_size, random.randrange(1, 16) * block_size]
+    apple_pos = [random.randrange(block_count) * block_size, random.randrange(block_count) * block_size]
     while apple_pos in snake_pos:
-        apple_pos = [random.randrange(1, 16) * block_size, random.randrange(1, 16) * block_size]
+        apple_pos = [random.randrange(block_count) * block_size, random.randrange(block_count) * block_size]
     t_score += 1
     return apple_pos, t_score
 
@@ -97,7 +99,7 @@ def display_score(display_text, display_text_2, network):
     text_rect_2 = text_surf_2.get_rect()
     text_rect.center = ((display_width / 2), (display_height / 2) - 100)
     text_rect_2.center = ((display_width / 2), (display_height / 2) - 60)
-    display.fill([200, 200, 200])
+    display.fill(window_color)
     display.blit(text_surf, text_rect)
     display.blit(text_surf_2, text_rect_2)
     pygame.display.update()
@@ -121,16 +123,16 @@ def is_on_grid(s_head):
 def will_be_on_grid(s_head, direction):
     result = 0
     if direction == "left":
-        if s_head[0] - 4 % block_size == 0:
+        if s_head[0] - snake_speed % block_size == 0:
             result = 1
     elif direction == "right":
-        if s_head[0] + 4 % block_size == 0:
+        if s_head[0] + snake_speed % block_size == 0:
             result = 1
     elif direction == "up":
-        if s_head[1] - 4 % block_size == 0:
+        if s_head[1] - snake_speed % block_size == 0:
             result = 1
     elif direction == "down":
-        if s_head[1] + 4 % block_size == 0:
+        if s_head[1] + snake_speed % block_size == 0:
             result = 1
     return result
 
@@ -256,18 +258,19 @@ def play_game(snake_position, snake_head, apple_position, neural_n, network, spe
             neural_network_input.append(cur_dir)
             """
             # neural_network_input = np.array([self_distances, wall_distances, apple_distances])
-            neural_network_input = np.array([neural_network_input])
-            neural_network_input = neural_network_input.reshape((network.sizes[0], 1))
+            neural_network_input = np.array([neural_network_input]).reshape((network.sizes[0], 1))
 
         display_snake(snake_position)
         pygame.display.set_caption("Snake  Skor: " + str(score))
         pygame.display.update()
+
         if speed == "slow":
-            clock.tick(60)
+            clock.tick(Settings.slow_speed)
         elif speed == "middle":
-            clock.tick(180)
+            clock.tick(Settings.middle_speed)
         elif speed == "fast":
-            clock.tick(360)
+            clock.tick(Settings.fast_speed)
+
         if counter < 60:
             counter += 1
         else:
@@ -277,11 +280,15 @@ def play_game(snake_position, snake_head, apple_position, neural_n, network, spe
                 crashed = True
         if crashed:
             crashed_counter -= 1
+
         moves_left -= 1
         moves_made += 1
+
     if speed == "slow" or speed == "middle":
         time.sleep(0.5)
+
     fitness = fitness + math.sqrt(moves_made)
+
     return fitness, score
 
 
@@ -290,7 +297,7 @@ def game(neural, network, speed):
     for i in range(24):
         snake_position_start.append([display_width / 2 - i * 8, display_height / 2])
     snake_head_start = snake_position_start[0]
-    apple_position_start = [random.randrange(1, 16) * block_size, random.randrange(1, 16) * block_size]
+    apple_position_start = [random.randrange(block_count) * block_size, random.randrange(block_count) * block_size]
     display.fill(window_color)
     pygame.display.update()
 
@@ -308,7 +315,6 @@ def game(neural, network, speed):
 
 if __name__ == "__main__":
     pygame.init()
-    game_number = 0
 
     snake_network = NeuralNetwork.Network(Settings.network_size)
     game(False, snake_network, "slow")
