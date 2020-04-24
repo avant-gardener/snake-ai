@@ -1,9 +1,10 @@
 import numpy as np
 import math
+import Settings
 
-block_size = 32
-display_height = 512
-display_width = 512
+block_size = Settings.block_size
+display_height = Settings.display_height
+display_width = Settings.display_width
 
 
 def calculate_distance_to_self(snake_position, width, height):

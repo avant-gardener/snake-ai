@@ -2,26 +2,25 @@ import NeuralNetwork
 import SnakeAI
 import Genetics
 import random
-import numpy as np
-import os
+import Settings
 
 
 def generate_random_population():
-    population_size = 100
-    network_size = [6, 20, 3]
+    population_size = Settings.population_size
+    network_size = Settings.network_size
     generation = []
     for i in range(population_size):
         snake = NeuralNetwork.Network(network_size)
         fitness_of_snake = SnakeAI.game(True, snake, "fast")
         generation.append([snake, fitness_of_snake])
-        generation.sort(key=lambda x: x[1], reverse=True)
+    generation.sort(key=lambda x: x[1], reverse=True)
     return generation
 
 
 def new_generation(parents):
     population_size = len(parents)
     generation = []
-    parents_for_new_generation = parents[:10]
+    parents_for_new_generation = parents[:Settings.parent_count_to_new_generation]
     for i in range(population_size // 5):
         snake = parents[i][0]
         fitness_of_snake = SnakeAI.game(True, snake, "fast")
@@ -46,38 +45,8 @@ def get_average(members):
 
 
 def load_snakes(weight_data, bias_data):
-    snake = NeuralNetwork.Network([6, 20, 3])
+    snake = NeuralNetwork.Network(Settings.network_size)
     snake.biases = bias_data
     snake.weights = weight_data
     fitness_of_snake = SnakeAI.game(True, snake, "middle")
     return fitness_of_snake
-
-
-mode = input("Press 1 if you want to run the model \n Press 2 if you want to run past models best \n "
-             "Press 3 if you want to run a specific snake from past model")
-
-
-if mode == "1":
-    generation_number = 20
-    this_generation = generate_random_population()
-    print("First Generation Average Fitness: " + str(get_average(this_generation)))
-    print(this_generation)
-    for j in range(generation_number):
-        this_generation = new_generation(this_generation)
-        print("Generation number: " + str(j) + "   Generation Average Fitness: " + str(get_average(this_generation)))
-        print(this_generation)
-        np.save("Values/Weights/weight_output{0}".format(j), this_generation[0][0].weights)
-        np.save("Values/Biases/bias_output{0}".format(j), this_generation[0][0].biases)
-elif mode == "2":
-    DIR = 'Values/Weights'
-    generation_count = len([name for name in os.listdir(DIR) if os.path.isfile(os.path.join(DIR, name))])
-    for p in range(generation_count):
-        w_data = np.load("Values/Weights/weight_output{0}.npy".format(p), allow_pickle=True)
-        b_data = np.load("Values/Biases/bias_output{0}.npy".format(p), allow_pickle=True)
-        load_snakes(w_data, b_data)
-elif mode == "3":
-    while 1:
-        snake_selected = input()
-        w_data = np.load("Values/Weights/weight_output{0}.npy".format(snake_selected), allow_pickle=True)
-        b_data = np.load("Values/Biases/bias_output{0}.npy".format(snake_selected), allow_pickle=True)
-        load_snakes(w_data, b_data)

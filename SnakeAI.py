@@ -5,15 +5,16 @@ import math
 import numpy as np
 import NeuralNetwork
 import SnakeTrainer
+import Settings
 
-
+# Initialize
 red = (200, 30, 30)
 black = (0, 0, 0)
 gray = (70, 70, 70)
 window_color = (200, 200, 200)
-display_width = 512
-display_height = 512
-block_size = 32
+display_width = Settings.display_width
+display_height = Settings.display_height
+block_size = Settings.block_size
 display = pygame.display.set_mode((display_width, display_height))
 clock = pygame.time.Clock()
 
@@ -26,7 +27,7 @@ def draw_grid():
 
 
 def display_snake(snake_pos):
-    color = (0, 0, 0)
+    color = black
     snake_size_x = block_size - 4
     snake_size_y = block_size - 4
     for position in snake_pos:
@@ -146,8 +147,6 @@ def play_game(snake_position, snake_head, apple_position, neural_n, network, spe
     counter = 0
     add_counter = 0
     direction_stack = []
-    train_data = []
-    move = 1
     neural_network_input = np.zeros((network.sizes[0], 1))
     moves = [pygame.K_LEFT, pygame.K_UP, pygame.K_RIGHT, pygame.K_DOWN]
     moves_left = 200
@@ -181,6 +180,8 @@ def play_game(snake_position, snake_head, apple_position, neural_n, network, spe
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
+            # This stack thing is for really quick moves
+            # If we don't use this sometimes moves can lag
             if len(direction_stack) == 1 and current_direction == button_direction:
                 button_direction = direction_stack[0]
                 direction_stack.pop()
@@ -207,10 +208,6 @@ def play_game(snake_position, snake_head, apple_position, neural_n, network, spe
                         direction_stack.append("down")
                     else:
                         button_direction = button_direction
-        if current_direction != button_direction:
-            direction_changed = True
-        else:
-            direction_changed = False
         prev_button_direction = button_direction
         display.fill(window_color)
         display.blit(grid, (0, 0))
@@ -225,34 +222,18 @@ def play_game(snake_position, snake_head, apple_position, neural_n, network, spe
             snake_position.insert(0, list(snake_head))
             add_counter -= 1
 
-        but_direction = SnakeTrainer.calculate_direction_input(button_direction)
-        cur_direction = SnakeTrainer.calculate_direction_input(current_direction)
-
-        if direction_changed:
-            if cur_direction == 3 and but_direction == 0:
-                move = 2
-            elif cur_direction == 0 and but_direction == 3:
-                move = 0
-            elif cur_direction < but_direction:
-                move = 2
-            elif cur_direction > but_direction:
-                move = 0
-        else:
-            move = 1
-        neural_network_output = np.zeros((3, 1))
-        neural_network_output[move] = 1.0
-
         distance_to_apple = SnakeTrainer.calculate_real_distance_to_apple(snake_head, apple_position)
         snake_position, apple_position, current_direction = update_snake(snake_head, snake_position, apple_position,
                                                                          button_direction, current_direction)
         new_distance_to_apple = SnakeTrainer.calculate_real_distance_to_apple(snake_head, apple_position)
+
         if is_on_grid(snake_head):
             if new_distance_to_apple < distance_to_apple:
                 fitness += 1
             elif new_distance_to_apple > distance_to_apple:
                 fitness -= 1.5
-        if is_on_grid(snake_head):
-            # I don't exactly know why but this only works with back clear even though I don't need it
+
+            # I don't exactly know why but this only works with back clear even though we don't need it
             right_clear = SnakeTrainer.is_right_clear(snake_position, current_direction)
             left_clear = SnakeTrainer.is_left_clear(snake_position, current_direction)
             back_clear = SnakeTrainer.is_back_clear(snake_position, current_direction)
@@ -277,8 +258,6 @@ def play_game(snake_position, snake_head, apple_position, neural_n, network, spe
             # neural_network_input = np.array([self_distances, wall_distances, apple_distances])
             neural_network_input = np.array([neural_network_input])
             neural_network_input = neural_network_input.reshape((network.sizes[0], 1))
-            if not neural_n:
-                train_data.append((neural_network_input, neural_network_output))
 
         display_snake(snake_position)
         pygame.display.set_caption("Snake  Skor: " + str(score))
@@ -303,7 +282,7 @@ def play_game(snake_position, snake_head, apple_position, neural_n, network, spe
     if speed == "slow" or speed == "middle":
         time.sleep(0.5)
     fitness = fitness + math.sqrt(moves_made)
-    return fitness, train_data, score
+    return fitness, score
 
 
 def game(neural, network, speed):
@@ -316,13 +295,12 @@ def game(neural, network, speed):
     pygame.display.update()
 
     if neural:
-        fitness, training_data, final_score = play_game(snake_position_start, snake_head_start, apple_position_start
-                                                        , neural, network, speed)
+        fitness, final_score = play_game(snake_position_start, snake_head_start, apple_position_start,
+                                         neural, network, speed)
         return fitness
     else:
-        fitness, training_data, final_score = play_game(snake_position_start, snake_head_start, apple_position_start
-                                                        , neural, network, speed)
-        snake_network.sgd(training_data, 10, 10, 1, training_data)
+        fitness, final_score = play_game(snake_position_start, snake_head_start, apple_position_start,
+                                         neural, network, speed)
         final_text = "Skorunuz: " + str(final_score)
         final_text_2 = "Tekrar Denemek İçin R'ye Basın"
         display_score(final_text, final_text_2, network)
@@ -330,7 +308,7 @@ def game(neural, network, speed):
 
 if __name__ == "__main__":
     pygame.init()
-
-    snake_network = NeuralNetwork.Network([11, 10, 3])
     game_number = 0
+
+    snake_network = NeuralNetwork.Network(Settings.network_size)
     game(False, snake_network, "slow")
