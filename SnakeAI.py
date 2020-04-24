@@ -298,8 +298,8 @@ def play_game(snake_position, snake_head, apple_position, neural_n, network):
             crashed_counter -= 1
         moves_left -= 1
         moves_made += 1
-
-    # time.sleep(0.5)
+    if not neural_n:
+        time.sleep(0.5)
     fitness = fitness + math.sqrt(moves_made)
     return fitness, train_data, score
 
