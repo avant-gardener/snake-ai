@@ -19,12 +19,15 @@ def crossover(network_x, network_y):
     # Weight crossover
     weight_length = len(child.weights)
     for i in range(weight_length):
-        layer_weights = child.weights[i]
-        layer_weight_length = len(layer_weights)
-        for k in range(layer_weight_length):
-            random_value = random.random()
-            if random_value < 0.45:
-                child.weights[i][k] = network_x.weights[i][k]
-            elif random_value < 0.9:
-                child.weights[i][k] = network_y.weights[i][k]
+        layer_nodes = child.weights[i]
+        layer_length = len(layer_nodes)
+        for k in range(layer_length):
+            layer_weights = child.weights[i][k]
+            layer_weight_length = len(layer_weights)
+            for j in range(layer_weight_length):
+                random_value = random.random()
+                if random_value < 0.45:
+                    child.weights[i][k][j] = network_x.weights[i][k][j]
+                elif random_value < 0.9:
+                    child.weights[i][k][j] = network_y.weights[i][k][j]
     return child

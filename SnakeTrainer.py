@@ -268,22 +268,40 @@ def calculate_real_distance_to_apple(snake_head, apple_position):
     return math.sqrt(x**2 + y**2)
 
 
-def is_food_to_the_right(snake_head, apple_position):
-    if snake_head[0] < apple_position[0]:
-        return 1
-    else:
-        return 0
+def is_food_to_the_right(snake_head, apple_position, direction):
+    result = 0
+    if direction == "left" and snake_head[1] > apple_position[1]:
+        result = 1
+    elif direction == "up" and snake_head[0] < apple_position[0]:
+        result = 1
+    elif direction == "right" and snake_head[1] < apple_position[1]:
+        result = 1
+    elif direction == "down" and snake_head[0] > apple_position[0]:
+        result = 1
+    return result
 
 
-def is_food_to_the_left(snake_head, apple_position):
-    if snake_head[0] > apple_position[0]:
-        return 1
-    else:
-        return 0
+def is_food_to_the_left(snake_head, apple_position, direction):
+    result = 1
+    if direction == "left" and snake_head[1] > apple_position[1]:
+        result = 0
+    elif direction == "up" and snake_head[0] < apple_position[0]:
+        result = 0
+    elif direction == "right" and snake_head[1] < apple_position[1]:
+        result = 0
+    elif direction == "down" and snake_head[0] > apple_position[0]:
+        result = 0
+    return result
 
 
-def is_food_straight_ahead(snake_head, apple_position):
-    if snake_head[1] > apple_position[1]:
-        return 1
-    else:
-        return 0
+def is_food_straight_ahead(snake_head, apple_position, direction):
+    result = 0
+    if direction == "left" and snake_head[0] > apple_position[0]:
+        result = 1
+    elif direction == "up" and snake_head[1] > apple_position[1]:
+        result = 1
+    elif direction == "right" and snake_head[0] < apple_position[0]:
+        result = 1
+    elif direction == "down" and snake_head[1] < apple_position[1]:
+        result = 1
+    return result

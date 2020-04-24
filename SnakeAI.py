@@ -1,6 +1,7 @@
 import pygame
 import random
 import time
+import math
 import numpy as np
 import NeuralNetwork
 import SnakeTrainer
@@ -116,6 +117,23 @@ def is_on_grid(s_head):
         return 0
 
 
+def will_be_on_grid(s_head, direction):
+    result = 0
+    if direction == "left":
+        if s_head[0] - 4 % block_size == 0:
+            result = 1
+    elif direction == "right":
+        if s_head[0] + 4 % block_size == 0:
+            result = 1
+    elif direction == "up":
+        if s_head[1] - 4 % block_size == 0:
+            result = 1
+    elif direction == "down":
+        if s_head[1] + 4 % block_size == 0:
+            result = 1
+    return result
+
+
 def play_game(snake_position, snake_head, apple_position, neural_n, network):
     crashed = False
     crashed_counter = 2
@@ -130,14 +148,14 @@ def play_game(snake_position, snake_head, apple_position, neural_n, network):
     direction_stack = []
     train_data = []
     move = 1
-    neural_network_input = np.zeros((6, 1))
+    neural_network_input = np.zeros((network.sizes[0], 1))
     moves = [pygame.K_LEFT, pygame.K_UP, pygame.K_RIGHT, pygame.K_DOWN]
     moves_left = 200
     moves_made = 0
     fitness = 0
 
     while crashed_counter > 0:
-        if neural_n:
+        if neural_n and is_on_grid(snake_head):
             network_move = np.argmax(network.feedforward(neural_network_input))
 
             cur_dir = SnakeTrainer.calculate_direction_output(current_direction)
@@ -223,41 +241,52 @@ def play_game(snake_position, snake_head, apple_position, neural_n, network):
             move = 1
         neural_network_output = np.zeros((3, 1))
         neural_network_output[move] = 1.0
-        if is_on_grid(snake_head) and counter >= 60:
-            # I don't exactly know why but this only works with back clear even though I don't need it
-            right_clear = SnakeTrainer.is_right_clear(snake_position, current_direction)
-            left_clear = SnakeTrainer.is_left_clear(snake_position, current_direction)
-            back_clear = SnakeTrainer.is_back_clear(snake_position, current_direction)
-            straight_clear = SnakeTrainer.is_straight_clear(snake_position, current_direction)
-            food_right = SnakeTrainer.is_food_to_the_right(snake_head, apple_position)
-            food_left = SnakeTrainer.is_food_to_the_left(snake_head, apple_position)
-            food_ahead = SnakeTrainer.is_food_straight_ahead(snake_head, apple_position)
-            neural_network_input = [left_clear, straight_clear, right_clear, food_right, food_left, food_ahead]
-            """
-            apple_distances = SnakeTrainer.calculate_distance_to_apple(snake_head, apple_position)
-            for i in apple_distances:
-                neural_network_input.append(i)
-            """
-            neural_network_input = np.array([neural_network_input])
-            neural_network_input = neural_network_input[0].reshape((6, 1))
-            if not neural_n:
-                train_data.append((neural_network_input, neural_network_output))
 
         distance_to_apple = SnakeTrainer.calculate_real_distance_to_apple(snake_head, apple_position)
         snake_position, apple_position, current_direction = update_snake(snake_head, snake_position, apple_position,
                                                                          button_direction, current_direction)
         new_distance_to_apple = SnakeTrainer.calculate_real_distance_to_apple(snake_head, apple_position)
-        if new_distance_to_apple < distance_to_apple:
-            fitness += 1
-        elif new_distance_to_apple > distance_to_apple:
-            fitness -= 1.5
+        if is_on_grid(snake_head):
+            if new_distance_to_apple < distance_to_apple:
+                fitness += 1
+            elif new_distance_to_apple > distance_to_apple:
+                fitness -= 1.5
+        if is_on_grid(snake_head):
+            # I don't exactly know why but this only works with back clear even though I don't need it
+            right_clear = SnakeTrainer.is_right_clear(snake_position, current_direction)
+            left_clear = SnakeTrainer.is_left_clear(snake_position, current_direction)
+            back_clear = SnakeTrainer.is_back_clear(snake_position, current_direction)
+            straight_clear = SnakeTrainer.is_straight_clear(snake_position, current_direction)
+            food_right = SnakeTrainer.is_food_to_the_right(snake_head, apple_position, current_direction)
+            food_left = SnakeTrainer.is_food_to_the_left(snake_head, apple_position, current_direction)
+            food_ahead = SnakeTrainer.is_food_straight_ahead(snake_head, apple_position, current_direction)
+            neural_network_input = [left_clear, straight_clear, right_clear, food_right, food_left, food_ahead]
+            """
+            self_distances = SnakeTrainer.calculate_distance_to_self(snake_position, display_width, display_height)
+            wall_distances = SnakeTrainer.calculate_distance_to_walls(snake_head, display_width, display_height)
+            apple_distances = SnakeTrainer.calculate_distance_to_apple(snake_head, apple_position)
+            neural_network_input = []
+            for i in apple_distances:
+                neural_network_input.append(i)
+            for i in wall_distances:
+                neural_network_input.append(i)
+            for i in self_distances:
+                neural_network_input.append(i)
+            neural_network_input.append(cur_dir)
+            """
+            # neural_network_input = np.array([self_distances, wall_distances, apple_distances])
+            neural_network_input = np.array([neural_network_input])
+            neural_network_input = neural_network_input.reshape((network.sizes[0], 1))
+            if not neural_n:
+                train_data.append((neural_network_input, neural_network_output))
+
         display_snake(snake_position)
         pygame.display.set_caption("Snake  Skor: " + str(score))
         pygame.display.update()
         if not neural_n:
             clock.tick(60)
         else:
-            clock.tick(180)
+            clock.tick(360)
         if counter < 60:
             counter += 1
         else:
@@ -271,7 +300,7 @@ def play_game(snake_position, snake_head, apple_position, neural_n, network):
         moves_made += 1
 
     # time.sleep(0.5)
-
+    fitness = fitness + math.sqrt(moves_made)
     return fitness, train_data, score
 
 
