@@ -105,9 +105,9 @@ def display_score(display_text, display_text_2, network):
             if event.type == pygame.QUIT:
                 pygame.quit()
             if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
-                game(False, network)
+                game(False, network, "slow")
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_n:
-                game(True, network)
+                game(True, network, "fast")
 
 
 def is_on_grid(s_head):
@@ -134,7 +134,7 @@ def will_be_on_grid(s_head, direction):
     return result
 
 
-def play_game(snake_position, snake_head, apple_position, neural_n, network):
+def play_game(snake_position, snake_head, apple_position, neural_n, network, speed):
     crashed = False
     crashed_counter = 2
     prev_button_direction = "right"
@@ -283,9 +283,11 @@ def play_game(snake_position, snake_head, apple_position, neural_n, network):
         display_snake(snake_position)
         pygame.display.set_caption("Snake  Skor: " + str(score))
         pygame.display.update()
-        if not neural_n:
+        if speed == "slow":
             clock.tick(60)
-        else:
+        elif speed == "middle":
+            clock.tick(180)
+        elif speed == "fast":
             clock.tick(360)
         if counter < 60:
             counter += 1
@@ -298,13 +300,13 @@ def play_game(snake_position, snake_head, apple_position, neural_n, network):
             crashed_counter -= 1
         moves_left -= 1
         moves_made += 1
-    if not neural_n:
+    if speed == "slow" or speed == "middle":
         time.sleep(0.5)
     fitness = fitness + math.sqrt(moves_made)
     return fitness, train_data, score
 
 
-def game(neural, network):
+def game(neural, network, speed):
     snake_position_start = []
     for i in range(24):
         snake_position_start.append([display_width / 2 - i * 8, display_height / 2])
@@ -315,11 +317,11 @@ def game(neural, network):
 
     if neural:
         fitness, training_data, final_score = play_game(snake_position_start, snake_head_start, apple_position_start
-                                                        , neural, network)
+                                                        , neural, network, speed)
         return fitness
     else:
         fitness, training_data, final_score = play_game(snake_position_start, snake_head_start, apple_position_start
-                                                        , neural, network)
+                                                        , neural, network, speed)
         snake_network.sgd(training_data, 10, 10, 1, training_data)
         final_text = "Skorunuz: " + str(final_score)
         final_text_2 = "Tekrar Denemek İçin R'ye Basın"
@@ -331,4 +333,4 @@ if __name__ == "__main__":
 
     snake_network = NeuralNetwork.Network([11, 10, 3])
     game_number = 0
-    game(False, snake_network)
+    game(False, snake_network, "slow")
