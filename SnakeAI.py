@@ -1,13 +1,13 @@
-import pygame
+""" Snake game """
 import random
 import time
 import math
+import pygame
 import numpy as np
 import NeuralNetwork
 import SnakeTrainer
 import Settings
 
-# Initialize
 red = (200, 30, 30)
 black = (0, 0, 0)
 gray = (70, 70, 70)
@@ -20,11 +20,14 @@ block_count = Settings.block_count
 display = pygame.display.set_mode((display_width, display_height))
 clock = pygame.time.Clock()
 
+pygame.init()
+
 
 def draw_grid():
     for x in range(display_width):
         for y in range(display_height):
-            rect = pygame.Rect(x * block_size, y * block_size, block_size, block_size)
+            rect = pygame.Rect(x * block_size, y * block_size,
+                               block_size, block_size)
             pygame.draw.rect(display, gray, rect, 1)
 
 
@@ -34,13 +37,19 @@ def display_snake(snake_pos):
     snake_size_y = block_size - 4
     for position in snake_pos:
         if position == snake_pos[0]:
-            pygame.draw.rect(display, color, pygame.Rect(position[0], position[1], block_size, block_size))
+            pygame.draw.rect(display, color,
+                             pygame.Rect(position[0], position[1],
+                                         block_size, block_size))
         else:
-            pygame.draw.rect(display, color, pygame.Rect(position[0] + 2, position[1] + 2, snake_size_x, snake_size_y))
+            pygame.draw.rect(display, color,
+                             pygame.Rect(position[0] + 2, position[1] + 2,
+                                         snake_size_x, snake_size_y))
 
 
 def display_apple(apple_pos):
-    pygame.draw.rect(display, red, pygame.Rect(apple_pos[0] + 2, apple_pos[1] + 2, block_size - 4, block_size - 4))
+    pygame.draw.rect(display, red,
+                     pygame.Rect(apple_pos[0] + 2, apple_pos[1] + 2,
+                                 block_size - 4, block_size - 4))
 
 
 def update_snake(snake_head_pos, snake_pos, apple_pos, direction, cur_direction):
@@ -62,10 +71,10 @@ def update_snake(snake_head_pos, snake_pos, apple_pos, direction, cur_direction)
 
 
 def collision_with_boundaries(snake_h):
-    if snake_h[0] >= display_height or snake_h[0] < 0 or snake_h[1] >= display_width or snake_h[1] < 0:
+    if snake_h[0] >= display_height or snake_h[0] < 0 or \
+       snake_h[1] >= display_width or snake_h[1] < 0:
         return 1
-    else:
-        return 0
+    return 0
 
 
 def collision_with_self(snake_pos):
@@ -73,11 +82,11 @@ def collision_with_self(snake_pos):
     snake_crashed = 0
     for snake_part in snake_pos[24:]:
         if snake_part[0] <= snake_h[0] < snake_part[0] + block_size and \
-                    snake_part[1] <= snake_h[1] < snake_part[1] + block_size:
+           snake_part[1] <= snake_h[1] < snake_part[1] + block_size:
             snake_crashed = 1
         elif snake_part == snake_pos[-1]:
             if snake_h[0] <= snake_part[0] < snake_h[0] + block_size and \
-                    snake_h[1] < snake_part[1] < snake_h[1] + block_size:
+               snake_h[1] < snake_part[1] < snake_h[1] + block_size:
                 snake_crashed = 1
     return snake_crashed
 
@@ -116,8 +125,7 @@ def display_score(display_text, display_text_2, network):
 def is_on_grid(s_head):
     if s_head[0] % block_size == 0 and s_head[1] % block_size == 0:
         return 1
-    else:
-        return 0
+    return 0
 
 
 def will_be_on_grid(s_head, direction):
@@ -138,6 +146,7 @@ def will_be_on_grid(s_head, direction):
 
 
 def play_game(snake_position, snake_head, apple_position, neural_n, network, speed):
+    """ Main game loop """
     crashed = False
     crashed_counter = 2
     prev_button_direction = "right"
@@ -151,14 +160,13 @@ def play_game(snake_position, snake_head, apple_position, neural_n, network, spe
     direction_stack = []
     neural_network_input = np.zeros((network.sizes[0], 1))
     moves = [pygame.K_LEFT, pygame.K_UP, pygame.K_RIGHT, pygame.K_DOWN]
-    moves_left = 200
+    moves_left = 300
     moves_made = 0
     fitness = 0
 
     while crashed_counter > 0:
         if neural_n and is_on_grid(snake_head):
             network_move = np.argmax(network.feedforward(neural_network_input))
-
             cur_dir = SnakeTrainer.calculate_direction_output(current_direction)
             cur_dir = np.argmax(cur_dir)
             # Turn left
@@ -197,8 +205,6 @@ def play_game(snake_position, snake_head, apple_position, neural_n, network, spe
                         button_direction = "up"
                     elif event.key == pygame.K_DOWN and prev_button_direction != "up":
                         button_direction = "down"
-                    else:
-                        button_direction = button_direction
                 elif event.type == pygame.KEYDOWN and len(direction_stack) == 0:
                     if event.key == pygame.K_LEFT and button_direction != "right":
                         direction_stack.append("left")
@@ -208,8 +214,6 @@ def play_game(snake_position, snake_head, apple_position, neural_n, network, spe
                         direction_stack.append("up")
                     elif event.key == pygame.K_DOWN and button_direction != "up":
                         direction_stack.append("down")
-                    else:
-                        button_direction = button_direction
         prev_button_direction = button_direction
         display.fill(window_color)
         display.blit(grid, (0, 0))
@@ -217,7 +221,7 @@ def play_game(snake_position, snake_head, apple_position, neural_n, network, spe
 
         if snake_head == apple_position:
             apple_position, score = collision_with_apple(score, snake_position)
-            moves_left += 100 * score
+            moves_left += 120 * score
             fitness += 10
             add_counter = 8
         if add_counter > 0:
@@ -243,20 +247,20 @@ def play_game(snake_position, snake_head, apple_position, neural_n, network, spe
             food_right = SnakeTrainer.is_food_to_the_right(snake_head, apple_position, current_direction)
             food_left = SnakeTrainer.is_food_to_the_left(snake_head, apple_position, current_direction)
             food_ahead = SnakeTrainer.is_food_straight_ahead(snake_head, apple_position, current_direction)
-            neural_network_input = [left_clear, straight_clear, right_clear, food_right, food_left, food_ahead]
-            """
-            self_distances = SnakeTrainer.calculate_distance_to_self(snake_position, display_width, display_height)
-            wall_distances = SnakeTrainer.calculate_distance_to_walls(snake_head, display_width, display_height)
-            apple_distances = SnakeTrainer.calculate_distance_to_apple(snake_head, apple_position)
-            neural_network_input = []
-            for i in apple_distances:
-                neural_network_input.append(i)
-            for i in wall_distances:
-                neural_network_input.append(i)
-            for i in self_distances:
-                neural_network_input.append(i)
-            neural_network_input.append(cur_dir)
-            """
+            # food_behind = SnakeTrainer.is_food_behind(snake_head, apple_position, current_direction)
+            neural_network_input = [left_clear, straight_clear, right_clear,
+                                    food_right, food_left, food_ahead]
+            # self_distances = SnakeTrainer.calculate_distance_to_self(snake_position, display_width, display_height)
+            # wall_distances = SnakeTrainer.calculate_distance_to_walls(snake_head, display_width, display_height)
+            # apple_distances = SnakeTrainer.calculate_distance_to_apple(snake_head, apple_position)
+            # neural_network_input = []
+            # for i in apple_distances:
+            #     neural_network_input.append(i)
+            # for i in wall_distances:
+            #     neural_network_input.append(i)
+            # for i in self_distances:
+            #     neural_network_input.append(i)
+            # neural_network_input.append(cur_dir)
             # neural_network_input = np.array([self_distances, wall_distances, apple_distances])
             neural_network_input = np.array([neural_network_input]).reshape((network.sizes[0], 1))
 
@@ -284,7 +288,7 @@ def play_game(snake_position, snake_head, apple_position, neural_n, network, spe
         moves_left -= 1
         moves_made += 1
 
-    if speed == "slow" or speed == "middle":
+    if speed in ("slow", "middle"):
         time.sleep(0.5)
 
     fitness = fitness + math.sqrt(moves_made)
@@ -297,24 +301,23 @@ def game(neural, network, speed):
     for i in range(24):
         snake_position_start.append([display_width / 2 - i * 8, display_height / 2])
     snake_head_start = snake_position_start[0]
-    apple_position_start = [random.randrange(block_count) * block_size, random.randrange(block_count) * block_size]
+    apple_position_start = [random.randrange(block_count) * block_size,
+                            random.randrange(block_count) * block_size]
     display.fill(window_color)
     pygame.display.update()
 
     if neural:
-        fitness, final_score = play_game(snake_position_start, snake_head_start, apple_position_start,
-                                         neural, network, speed)
-        return fitness
+        fitness, final_score = play_game(snake_position_start, snake_head_start,
+                                         apple_position_start, neural, network, speed)
     else:
-        fitness, final_score = play_game(snake_position_start, snake_head_start, apple_position_start,
-                                         neural, network, speed)
+        fitness, final_score = play_game(snake_position_start, snake_head_start,
+                                         apple_position_start, neural, network, speed)
         final_text = "Skorunuz: " + str(final_score)
         final_text_2 = "Tekrar Denemek İçin R'ye Basın"
         display_score(final_text, final_text_2, network)
+    return fitness
 
 
 if __name__ == "__main__":
-    pygame.init()
-
     snake_network = NeuralNetwork.Network(Settings.network_size)
     game(False, snake_network, "slow")

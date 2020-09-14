@@ -1,5 +1,5 @@
-population_size = 100
-parent_count_to_new_generation = 10
+population_size = 55
+parent_count_to_new_generation = 6
 generation_count = 30
 network_size = [6, 20, 3]
 display_width = 512
@@ -8,5 +8,5 @@ block_size = 32
 block_count = display_width / block_size
 slow_speed = 60
 middle_speed = 180
-fast_speed = 360
+fast_speed = 480
 snake_speed = 4

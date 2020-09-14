@@ -180,11 +180,9 @@ def is_left_clear(snake_position, current_direction):
         snake_position[0][1] -= block_size
     elif current_direction == "down":
         snake_position[0][0] += block_size
-    if collision_with_self(snake_position) or collision_with_boundaries(snake_head):
-        snake_position[0] = snake_head
+    if collision_with_self(snake_position) or collision_with_boundaries(snake_head) or (snake_head in snake_position[1:]):
         return 0
     else:
-        snake_position[0] = snake_head
         return 1
 
 
@@ -198,7 +196,7 @@ def is_straight_clear(snake_position, current_direction):
         snake_position[0][0] += block_size
     elif current_direction == "down":
         snake_position[0][1] += block_size
-    if collision_with_self(snake_position) or collision_with_boundaries(snake_head):
+    if collision_with_self(snake_position) or collision_with_boundaries(snake_head) or (snake_head in snake_position[1:]):
         return 0
     else:
         return 1
@@ -214,7 +212,7 @@ def is_right_clear(snake_position, current_direction):
         snake_position[0][1] += block_size
     elif current_direction == "down":
         snake_position[0][0] -= block_size
-    if collision_with_self(snake_position) or collision_with_boundaries(snake_head):
+    if collision_with_self(snake_position) or collision_with_boundaries(snake_head) or (snake_head in snake_position[1:]):
         return 0
     else:
         return 1
@@ -230,7 +228,7 @@ def is_back_clear(snake_position, current_direction):
         snake_position[0][0] -= block_size
     elif current_direction == "down":
         snake_position[0][1] -= block_size
-    if collision_with_self(snake_position) or collision_with_boundaries(snake_head):
+    if collision_with_self(snake_position) or collision_with_boundaries(snake_head) or (snake_head in snake_position[1:]):
         return 0
     else:
         return 1
@@ -249,7 +247,7 @@ def collision_with_self(snake_pos):
         if snake_part[0] <= snake_h[0] < snake_part[0] + block_size and \
                     snake_part[1] <= snake_h[1] < snake_part[1] + block_size:
             snake_crashed = 1
-        elif snake_part == snake_pos[-1]:
+        elif snake_part in snake_pos[:-8]:
             if snake_h[0] <= snake_part[0] < snake_h[0] + block_size and \
                     snake_h[1] < snake_part[1] < snake_h[1] + block_size:
                 snake_crashed = 1
@@ -257,7 +255,7 @@ def collision_with_self(snake_pos):
 
 
 def collision_with_boundaries(snake_h):
-    if snake_h[0] >= display_height or snake_h[0] < 0 or snake_h[1] >= display_width or snake_h[1] < 0:
+    if snake_h[0] >= display_width or snake_h[0] < 0 or snake_h[1] >= display_height or snake_h[1] < 0:
         return 1
     else:
         return 0
@@ -283,15 +281,15 @@ def is_food_to_the_right(snake_head, apple_position, direction):
 
 
 def is_food_to_the_left(snake_head, apple_position, direction):
-    result = 1
-    if direction == "left" and snake_head[1] > apple_position[1]:
-        result = 0
-    elif direction == "up" and snake_head[0] < apple_position[0]:
-        result = 0
-    elif direction == "right" and snake_head[1] < apple_position[1]:
-        result = 0
-    elif direction == "down" and snake_head[0] > apple_position[0]:
-        result = 0
+    result = 0
+    if direction == "left" and snake_head[1] < apple_position[1]:
+        result = 1
+    elif direction == "up" and snake_head[0] > apple_position[0]:
+        result = 1
+    elif direction == "right" and snake_head[1] > apple_position[1]:
+        result = 1
+    elif direction == "down" and snake_head[0] < apple_position[0]:
+        result = 1
     return result
 
 
@@ -304,5 +302,18 @@ def is_food_straight_ahead(snake_head, apple_position, direction):
     elif direction == "right" and snake_head[0] < apple_position[0]:
         result = 1
     elif direction == "down" and snake_head[1] < apple_position[1]:
+        result = 1
+    return result
+
+
+def is_food_behind(snake_head, apple_position, direction):
+    result = 0
+    if direction == "left" and snake_head[0] < apple_position[0]:
+        result = 1
+    elif direction == "up" and snake_head[1] < apple_position[1]:
+        result = 1
+    elif direction == "right" and snake_head[0] > apple_position[0]:
+        result = 1
+    elif direction == "down" and snake_head[1] > apple_position[1]:
         result = 1
     return result
